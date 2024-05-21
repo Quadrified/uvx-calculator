@@ -1,117 +1,200 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
-import React from 'react';
-import type {PropsWithChildren} from 'react';
+import React, { useState, FC } from 'react';
 import {
   SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
   Text,
-  useColorScheme,
-  View,
+  TouchableOpacity,
+  StyleSheet,
+  FlatList,
 } from 'react-native';
+import { evaluate } from 'mathjs';
+import Animated, {
+  FadeIn,
+  FadeInLeft,
+  FadeInRight,
+  SlideInDown,
+} from 'react-native-reanimated';
+import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
+import AppColors from './src/themes/AppColors';
+import { CalculatorInputProps } from './src/types/CalculatorInput';
+import { INPUT_NUMBERS_AND_OPERATORS } from './src/utils/constants';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+const App: FC = () => {
+  const [display, setDisplay] = useState<string>('');
+  const [result, setResult] = useState<string>('');
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
+  const onOperatorPress = (value: string) => {
+    if (value === '=') {
+      onCalculateResult();
+    } else if (value === 'AC') {
+      clearDisplay();
+    } else if (value === 'DEL') {
+      deleteLastInput();
+    } else {
+      setDisplay(display + value);
+    }
+  };
 
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
+  const onCalculateResult = () => {
+    if (!display) {
+      return;
+    }
+    try {
+      const evalResult = evaluate(display);
+      setResult(String(evalResult));
+    } catch (error) {
+      setResult('Input Error');
+    }
+  };
 
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+  const clearDisplay = () => {
+    setDisplay('');
+    setResult('');
+  };
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+  const deleteLastInput = () => {
+    setDisplay(display.slice(0, -1));
+  };
+
+  const renderCalculatorInput = ({ item }: CalculatorInputProps) => {
+    if (item === 'DEL') {
+      return (
+        <TouchableOpacity
+          activeOpacity={0.7}
+          style={styles.inputButton}
+          onPress={() => onOperatorPress(item)}>
+          <FontAwesome6 name="delete-left" size={32} />
+        </TouchableOpacity>
+      );
+    }
+    if (item === 'AC') {
+      return (
+        <TouchableOpacity
+          activeOpacity={0.7}
+          style={styles.allClearButton}
+          onPress={() => onOperatorPress(item)}>
+          <Text style={styles.allClearButtonText}>{item}</Text>
+        </TouchableOpacity>
+      );
+    }
+    return (
+      <TouchableOpacity
+        activeOpacity={0.7}
+        style={styles.inputButton}
+        onPress={() => onOperatorPress(item)}>
+        <Text style={styles.inputButtonText}>{item}</Text>
+      </TouchableOpacity>
+    );
   };
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
+    <SafeAreaView style={styles.mainContainer}>
+      <Animated.View
+        entering={FadeIn.duration(500)}
+        style={styles.displayContainer}>
+        <Animated.View
+          entering={FadeInRight.duration(500)}
+          exiting={FadeInLeft.duration(500)}>
+          <Text style={styles.inputDisplay}>{display}</Text>
+        </Animated.View>
+        <Animated.View
+          entering={FadeInRight.duration(500)}
+          exiting={FadeInLeft.duration(500)}>
+          <Text style={styles.resultDisplay}>{result}</Text>
+        </Animated.View>
+      </Animated.View>
+      <Animated.View
+        entering={SlideInDown.duration(500)}
+        style={styles.inputButtonsContainer}>
+        <FlatList
+          data={INPUT_NUMBERS_AND_OPERATORS}
+          keyExtractor={input => input}
+          numColumns={4}
+          renderItem={renderCalculatorInput}
+        />
+        <TouchableOpacity
+          activeOpacity={0.7}
+          style={styles.resultButtonContainer}
+          onPress={onCalculateResult}>
+          <Text style={styles.resultButtonText}>{'='}</Text>
+        </TouchableOpacity>
+      </Animated.View>
     </SafeAreaView>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+  mainContainer: {
+    flex: 1,
+    justifyContent: 'space-between',
+    backgroundColor: AppColors.calculatorBg,
   },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
+  displayContainer: {
+    padding: 20,
+    backgroundColor: AppColors.inputBg,
+    height: '30%',
+    borderBottomStartRadius: 20,
+    borderBottomEndRadius: 20,
+    elevation: 2,
+    marginBottom: 20,
   },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
+  inputDisplay: {
+    fontSize: 72,
+    textAlign: 'right',
+    color: AppColors.operatorBtnText,
   },
-  highlight: {
-    fontWeight: '700',
+  resultDisplay: {
+    fontSize: 68,
+    textAlign: 'right',
+    color: AppColors.operatorBtnText,
+  },
+  inputButtonsContainer: {
+    height: '70%',
+    flexDirection: 'row',
+    alignSelf: 'center',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    marginHorizontal: 5,
+  },
+  inputButton: {
+    width: '23%',
+    margin: '1%',
+    padding: 25,
+    backgroundColor: AppColors.numbersBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 100,
+    textAlign: 'center',
+    textAlignVertical: 'center',
+  },
+  inputButtonText: {
+    fontSize: 34,
+    color: AppColors.numbersText,
+  },
+  allClearButton: {
+    width: '23%',
+    margin: '1%',
+    padding: 25,
+    backgroundColor: AppColors.clearBtnBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 100,
+  },
+  allClearButtonText: {
+    fontSize: 32,
+    color: AppColors.clearBtnText,
+  },
+  resultButtonContainer: {
+    width: '90%',
+    marginVertical: 15,
+    padding: 10,
+    backgroundColor: AppColors.resultBtnBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 100,
+  },
+  resultButtonText: {
+    fontSize: 62,
+    color: AppColors.clearBtnText,
   },
 });
 
