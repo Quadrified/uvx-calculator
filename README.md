@@ -11,10 +11,10 @@ The app can be found at: [MyCalc Github Repo](https://github.com/Quadrified/uvx-
 - Uses [react-native-vector-icons](https://github.com/oblador/react-native-vector-icons) for custom icons
 
 ## Screenshots
-Screenshots present in `assets/screenshots` folder if the following fail to load.
+Screenshots are present in `assets/screenshots` folder if the following fail to load.
 
-![App Icon]("./assets/screenshots/app-icon.png")
-![Main App]("./assets/screenshots/main-app.png")
-![Calculation Example]("./assets/screenshots/calculation.png")
+<img alt="App Icon" src="./assets/screenshots/app-icon.png" width="200" />
+<img alt="Main App" src="./assets/screenshots/main-app.png" width="200" />
+<img alt="Calculation Example" src="./assets/screenshots/calculation.png" width="200" />
 
 
